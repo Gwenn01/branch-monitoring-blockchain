@@ -1,11 +1,19 @@
-// server.js (ES Module style)
+// server/server.js
 import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 5000;
 
-app.get('/', (req, res) => {
-  res.send('Hello from ES Module!');
+app.use(cors()); // Allow requests from frontend
+app.use(express.json()); // Parse JSON
+
+// Example route
+app.get('/api/message', (req, res) => {
+  res.json({ message: 'Hello from the backend!' });
 });
 
 app.listen(PORT, () => {
