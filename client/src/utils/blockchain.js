@@ -24,18 +24,37 @@ const CONTRACT_ABI = [
   }
 ];
 
-export async function connectWallet() {
-  if (!window.ethereum) {
-    alert("MetaMask not detected. Please install it first.");
-    return null;
+// utils/blockchain.js
+export async function connectWallet(providerType = "metamask") {
+  let provider;
+
+  if (providerType === "okx") {
+    provider = window.okxwallet || (window.ethereum?.isOkxWallet ? window.ethereum : null);
+  } else if (providerType === "metamask") {
+    provider = window.ethereum?.isMetaMask ? window.ethereum : null;
   }
 
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const accounts = await provider.send("eth_requestAccounts", []);
-  const signer = await provider.getSigner();
+  if (!provider) {
+    throw new Error(`${providerType} Wallet not found. Please install it.`);
+  }
 
-  return { provider, signer, account: accounts[0] };
+  try {
+    const accounts = await provider.request({ method: "eth_requestAccounts" });
+    const account = accounts[0];
+    const chainId = await provider.request({ method: "eth_chainId" });
+
+    return {
+      provider,
+      account,
+      chainId,
+      providerType,
+    };
+  } catch (error) {
+    console.error("Error connecting wallet:", error);
+    throw error;
+  }
 }
+
 
 export async function getContract(signerOrProvider) {
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signerOrProvider);

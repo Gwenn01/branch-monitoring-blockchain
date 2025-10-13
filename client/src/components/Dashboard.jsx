@@ -7,13 +7,10 @@ export default function Dashboard({ wallet }) {
   const [form, setForm] = useState({ name: "", email: "", walletAddress: "" });
   const [loading, setLoading] = useState(false);
 
-  // Load branches from backend
   useEffect(() => {
     const loadBranches = async () => {
       try {
         const data = await fetchBranches();
-
-        // Fetch live balances for each branch wallet
         const provider = new ethers.BrowserProvider(window.ethereum);
         const withBalances = await Promise.all(
           data.map(async (b) => {
@@ -22,7 +19,6 @@ export default function Dashboard({ wallet }) {
             return { ...b, balance: balanceEth };
           })
         );
-
         setBranches(withBalances);
       } catch (err) {
         console.error("Error loading branches:", err);
@@ -31,20 +27,15 @@ export default function Dashboard({ wallet }) {
     loadBranches();
   }, []);
 
-  // Add new branch
   const handleAddBranch = async (e) => {
     e.preventDefault();
     if (!form.name || !form.walletAddress) return alert("All fields required!");
-
     try {
       setLoading(true);
       const branch = await createBranch(form);
-
-      // Fetch its wallet balance
       const provider = new ethers.BrowserProvider(window.ethereum);
       const balanceWei = await provider.getBalance(branch.walletAddress);
       const balanceEth = Number(ethers.formatEther(balanceWei));
-
       setBranches((prev) => [...prev, { ...branch, balance: balanceEth }]);
       setForm({ name: "", email: "", walletAddress: "" });
     } catch (err) {
@@ -57,24 +48,26 @@ export default function Dashboard({ wallet }) {
   const totalBalance = branches.reduce((sum, b) => sum + b.balance, 0);
 
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">Dashboard</h2>
+    <div className="p-4 sm:p-6 space-y-6">
+      <h2 className="text-xl sm:text-2xl font-bold">Dashboard</h2>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-cardDark p-4 rounded-xl">
           <h3 className="text-gray-400 text-sm">Total Branches</h3>
-          <p className="text-3xl font-bold text-white">{branches.length}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-white">
+            {branches.length}
+          </p>
         </div>
         <div className="bg-cardDark p-4 rounded-xl">
           <h3 className="text-gray-400 text-sm">Total Balance</h3>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-2xl sm:text-3xl font-bold text-white">
             ₱{totalBalance.toFixed(4)}
           </p>
         </div>
         <div className="bg-cardDark p-4 rounded-xl">
           <h3 className="text-gray-400 text-sm">Connected Wallet</h3>
-          <p className="text-sm text-gray-300">
+          <p className="text-xs sm:text-sm text-gray-300 break-all">
             {wallet.account.slice(0, 6)}...{wallet.account.slice(-4)}
           </p>
         </div>
@@ -83,7 +76,10 @@ export default function Dashboard({ wallet }) {
       {/* Add Branch Form */}
       <div className="bg-cardDark p-4 rounded-xl space-y-4">
         <h3 className="text-gray-400 text-sm">Add New Branch</h3>
-        <form onSubmit={handleAddBranch} className="grid grid-cols-3 gap-3">
+        <form
+          onSubmit={handleAddBranch}
+          className="grid grid-cols-1 md:grid-cols-3 gap-3"
+        >
           <input
             type="text"
             placeholder="Branch Name"
@@ -102,13 +98,15 @@ export default function Dashboard({ wallet }) {
             type="text"
             placeholder="Wallet Address"
             value={form.walletAddress}
-            onChange={(e) => setForm({ ...form, walletAddress: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, walletAddress: e.target.value })
+            }
             className="bg-gray-800 text-white rounded-lg p-2 focus:outline-none"
           />
           <button
             type="submit"
             disabled={loading}
-            className="col-span-3 bg-blue-600 px-4 py-2 rounded-lg text-white hover:bg-blue-500 disabled:opacity-50"
+            className="bg-blue-600 px-4 py-2 rounded-lg text-white hover:bg-blue-500 disabled:opacity-50 md:col-span-3"
           >
             {loading ? "Adding..." : "Add Branch"}
           </button>
@@ -116,9 +114,9 @@ export default function Dashboard({ wallet }) {
       </div>
 
       {/* Branch Table */}
-      <div className="bg-cardDark p-4 rounded-xl">
+      <div className="bg-cardDark p-4 rounded-xl overflow-x-auto">
         <h3 className="text-gray-400 text-sm mb-2">Branches Overview</h3>
-        <table className="w-full text-sm">
+        <table className="min-w-full text-sm">
           <thead>
             <tr className="text-gray-400 border-b border-gray-700">
               <th className="text-left p-2">Name</th>
@@ -129,11 +127,16 @@ export default function Dashboard({ wallet }) {
           </thead>
           <tbody>
             {branches.map((b, i) => (
-              <tr key={i} className="border-b border-gray-700 hover:bg-gray-800">
-                <td className="p-2">{b.name}</td>
-                <td className="p-2">{b.email}</td>
-                <td className="p-2 text-blue-400">{b.walletAddress}</td>
-                <td className="p-2">₱{b.balance.toFixed(4)}</td>
+              <tr
+                key={i}
+                className="border-b border-gray-700 hover:bg-gray-800"
+              >
+                <td className="p-2 text-white">{b.name}</td>
+                <td className="p-2 text-white">{b.email}</td>
+                <td className="p-2 text-blue-400 break-all">
+                  {b.walletAddress}
+                </td>
+                <td className="p-2 text-white">₱{b.balance.toFixed(4)}</td>
               </tr>
             ))}
           </tbody>
